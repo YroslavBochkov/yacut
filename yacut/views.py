@@ -1,12 +1,13 @@
+from http import HTTPStatus
+
 from flask import (
     flash,
+    jsonify,
     redirect,
     render_template,
-    url_for,
     request,
-    jsonify
+    url_for
 )
-from http import HTTPStatus
 
 from yacut import app
 from yacut.error_handlers import URLValidationError

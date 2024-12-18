@@ -1,4 +1,4 @@
-from yacut import app, db
+from yacut import app
 
 if __name__ == '__main__':
     app.run()
