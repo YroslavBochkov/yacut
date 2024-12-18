@@ -21,7 +21,7 @@ class URLForm(FlaskForm):
             Length(MIN_LEN, MAX_LEN_SHORT),
             Optional(),
             Regexp(regex=r'[A-Za-z0-9]+',
-                   message=('Используются недопустимые символы (разрешены'
+                   message=('Используются недопустимые символы (разрешены '
                             'только A-Z, a-z, 0-9).'))]
     )
     submit = SubmitField('Создать')
