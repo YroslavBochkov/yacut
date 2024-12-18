@@ -1,58 +1,68 @@
 import random
 import re
 from datetime import datetime
+
 from flask import url_for
 
-from . import db
+from yacut import db
+from yacut.constants import (MAX_LEN_ORIGINAL, MAX_LEN_SHORT,
+                             STR_FOR_GEN_URL, PATTERN_FOR_CHECK_URL)
+from yacut.error_handlers import URLValidationError
+
 
 class URLMap(db.Model):
+    """Модель для сохранения оригинальной и короткой ссылки на источник."""
+
     id = db.Column(db.Integer, primary_key=True)
-    original = db.Column(db.String(256), nullable=False)
-    short = db.Column(db.String(16), unique=True, nullable=False)
+    original = db.Column(db.String(MAX_LEN_ORIGINAL), nullable=False)
+    short = db.Column(db.String(MAX_LEN_SHORT), unique=True, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
-        return {
-            'url': self.original,
-            'short_link': url_for('redirect_to_original', short_id=self.short, _external=True)
-        }
+        """Метод создает словарь из атрибутов объекта."""
+        return dict(
+            url=self.original,
+            short_link=url_for('redirect_short_url', url=self.short,
+                               _external=True)
+        )
 
     @staticmethod
-    def get_unique_short_id(length=6):
-        """Генерирует уникальную короткую ссылку."""
-        chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    def get_unique_short_id():
+        """Метод создает уникальную короткую ссылку."""
         while True:
-            short_url = ''.join(random.choice(chars) for _ in range(length))
-            if not URLMap.query.filter_by(short=short_url).first():
+            short_url = ''.join(
+                random.choices(population=STR_FOR_GEN_URL, k=6)
+            )
+            if URLMap.query.filter_by(short=short_url).first() is None:
                 return short_url
 
     @staticmethod
-    def validate_custom_id(custom_id):
-        """Валидация custom_id."""
-        if not custom_id:
-            return False
-        
-        # Проверка на длину (до 16 символов)
-        if len(custom_id) > 16:
-            return False
-        
-        # Проверка на допустимые символы (только буквы и цифры)
-        return bool(re.match(r'^[a-zA-Z0-9]+$', custom_id))
+    def get_obj_by_short(url):
+        """Метод получает объект по его короткой ссылке."""
+        return URLMap.query.filter_by(short=url).first()
 
-    @classmethod
-    def create(cls, original, custom_id=None):
-        """Создание новой ссылки с валидацией."""
-        # Если custom_id не указан или невалиден - генерируем
-        if not custom_id or not cls.validate_custom_id(custom_id):
-            custom_id = cls.get_unique_short_id()
-        
-        # Проверка на уникальность custom_id
-        if cls.query.filter_by(short=custom_id).first():
-            raise ValueError('Предложенный вариант короткой ссылки уже существует.')
-        
-        # Создание и сохранение новой ссылки
-        new_url = cls(original=original, short=custom_id)
-        db.session.add(new_url)
+    @staticmethod
+    def validate_data(data):
+        """Валидация полей модели."""
+        if not data:
+            raise URLValidationError('Отсутствует тело запроса')
+        elif 'url' not in data:
+            raise URLValidationError('"url" является обязательным полем!')
+        elif not data.get('custom_id'):
+            data['custom_id'] = URLMap.get_unique_short_id()
+        elif re.search(PATTERN_FOR_CHECK_URL, data['custom_id']) is None:
+            raise URLValidationError('Указано недопустимое имя для '
+                                     'короткой ссылки')
+        elif URLMap.get_obj_by_short(data['custom_id']) is not None:
+            raise URLValidationError('Предложенный вариант короткой ссылки '
+                                     'уже существует.')
+        return data
+
+    @staticmethod
+    def create_obj(data):
+        """Метод для создания объекта."""
+        data = URLMap.validate_data(data)
+        url_obj = URLMap(original=data['url'], short=data['custom_id'])
+        db.session.add(url_obj)
         db.session.commit()
-        
-        return new_url
+        return url_obj
