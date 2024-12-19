@@ -1,6 +1,5 @@
 from string import ascii_letters, digits
 
-MIN_LEN = 1
 MAX_LEN_ORIGINAL = 256
 MAX_LEN_SHORT = 16
 
