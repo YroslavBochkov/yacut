@@ -1,8 +1,9 @@
 from flask_wtf import FlaskForm
 from wtforms import SubmitField, URLField
-from wtforms.validators import DataRequired, Length, Optional, URL, ValidationError
+from wtforms.validators import DataRequired, Length, Optional, URL, ValidationError, Regexp
 
-from yacut.constants import MAX_LEN_ORIGINAL, MAX_LEN_SHORT, SHORT_URL_CHARS
+from yacut.constants import MAX_LEN_ORIGINAL, MAX_LEN_SHORT
+from yacut.settings import Config
 from yacut.models import URLMap
 
 # Константы для меток и сообщений
@@ -32,19 +33,15 @@ class URLForm(FlaskForm):
         CUSTOM_ID_LABEL,
         validators=[
             Length(min=1, max=MAX_LEN_SHORT),
+            Regexp(regex=Config.SHORT_URL_PATTERN, message=INVALID_CHARS_MESSAGE),
             Optional()]
     )
 
     def validate_custom_id(self, field):
         """
         Валидация короткой ссылки с проверкой в базе данных
-        и по допустимым символам
         """
         if field.data:
-            # Проверка на допустимые символы
-            if not all(char in SHORT_URL_CHARS for char in field.data):
-                raise ValidationError(INVALID_CHARS_MESSAGE)
-
             # Проверка уникальности в базе данных
             if URLMap.query.filter_by(short=field.data).first():
                 raise ValidationError(DUPLICATE_SHORT_LINK_MESSAGE)

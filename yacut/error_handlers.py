@@ -6,9 +6,9 @@ from flask import jsonify, render_template
 from yacut import app, db
 from yacut.constants import (
     MAX_LEN_SHORT,
-    MAX_LEN_ORIGINAL,
-    SHORT_URL_PATTERN
+    MAX_LEN_ORIGINAL
 )
+from yacut.settings import Config
 
 
 class URLValidationError(Exception):
@@ -61,7 +61,7 @@ def validate_url_map(data):
             )
 
         # Проверка на допустимые символы
-        if not re.match(SHORT_URL_PATTERN, data['custom_id']):
+        if not re.match(Config.SHORT_URL_PATTERN, data['custom_id']):
             raise URLValidationError(
                 'Указано недопустимое имя для короткой ссылки'
             )

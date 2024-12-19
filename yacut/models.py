@@ -6,8 +6,12 @@ from flask import url_for
 from sqlalchemy.exc import IntegrityError
 
 from yacut import db
-from yacut.constants import (MAX_LEN_ORIGINAL, MAX_LEN_SHORT,
-                             SHORT_URL_CHARS, SHORT_URL_PATTERN)
+from yacut.constants import (
+    MAX_LEN_ORIGINAL, 
+    MAX_LEN_SHORT, 
+    SHORT_URL_CHARS
+)
+from yacut.settings import Config
 from yacut.error_handlers import InvalidAPIUsage
 
 
@@ -46,37 +50,37 @@ class URLMap(db.Model):
     def create(cls, original, short=None):
         """
         Создание новой записи с проверкой и генерацией короткой ссылки.
-        
+
         Args:
             original (str): Оригинальная длинная ссылка
             short (str, optional): Пользовательский вариант короткой ссылки
-        
+
         Returns:
             URLMap: Созданный объект
-        
+
         Raises:
             InvalidAPIUsage: При проблемах создания ссылки
         """
         # Проверка пользовательского варианта короткой ссылки
         if short:
             # Валидация формата
-            if not re.match(SHORT_URL_PATTERN, short):
+            if not re.match(Config.SHORT_URL_PATTERN, short):
                 raise InvalidAPIUsage('Указано недопустимое имя для короткой ссылки')
-            
+
             # Проверка уникальности
             if cls.get_obj_by_short(short):
                 raise InvalidAPIUsage('Предложенный вариант короткой ссылки уже существует.')
-        
+
         # Генерация короткой ссылки, если не передана
         if not short:
             short = cls.get_unique_short_id()
-        
+
         # Создание нового объекта
         url_map = cls(
             original=original,
             short=short
         )
-        
+
         # Абстракция сохранения
         return cls.save(url_map)
 
@@ -84,13 +88,13 @@ class URLMap(db.Model):
     def save(cls, url_map):
         """
         Абстрактный метод сохранения с обработкой ошибок.
-        
+
         Args:
             url_map (URLMap): Объект для сохранения
-        
+
         Returns:
             URLMap: Сохраненный объект
-        
+
         Raises:
             InvalidAPIUsage: При ошибках сохранения
         """
