@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 from yacut import db
 from yacut.constants import (MAX_LEN_ORIGINAL, MAX_LEN_SHORT,
-                             STR_FOR_GEN_URL, PATTERN_FOR_CHECK_URL)
+                             SHORT_URL_CHARS, SHORT_URL_PATTERN)
 from yacut.error_handlers import InvalidAPIUsage
 
 
@@ -32,7 +32,7 @@ class URLMap(db.Model):
         """Метод создает уникальную короткую ссылку."""
         while True:
             short_url = ''.join(
-                random.choices(population=STR_FOR_GEN_URL, k=6)
+                random.choices(population=SHORT_URL_CHARS, k=6)
             )
             if URLMap.query.filter_by(short=short_url).first() is None:
                 return short_url
@@ -60,7 +60,7 @@ class URLMap(db.Model):
         # Проверка пользовательского варианта короткой ссылки
         if short:
             # Валидация формата
-            if not re.match(PATTERN_FOR_CHECK_URL, short):
+            if not re.match(SHORT_URL_PATTERN, short):
                 raise InvalidAPIUsage('Указано недопустимое имя для короткой ссылки')
             
             # Проверка уникальности

@@ -1,8 +1,16 @@
 from string import ascii_letters, digits
 
+# Максимальная длина оригинальной ссылки
 MAX_LEN_ORIGINAL = 256
+
+# Максимальная длина короткой ссылки
 MAX_LEN_SHORT = 16
 
-STR_FOR_GEN_URL = ascii_letters + digits
+# Допустимые символы для короткой ссылки
+SHORT_URL_CHARS = ascii_letters + digits
 
-PATTERN_FOR_CHECK_URL = r'^[A-Za-z0-9]{1,16}$'
+# Регулярное выражение для проверки короткой ссылки
+SHORT_URL_PATTERN = r'^[{}]{{1,{}}}$'.format(
+    ''.join(sorted(set(SHORT_URL_CHARS))), 
+    MAX_LEN_SHORT
+)
