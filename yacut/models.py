@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from yacut import db
 from yacut.constants import (MAX_LEN_ORIGINAL, MAX_LEN_SHORT,
                              STR_FOR_GEN_URL, PATTERN_FOR_CHECK_URL)
-from yacut.error_handlers import URLValidationError, InvalidAPIUsage
+from yacut.error_handlers import InvalidAPIUsage
 
 
 class URLMap(db.Model):
@@ -46,46 +46,35 @@ class URLMap(db.Model):
     def create(cls, original, short=None):
         """
         Создание новой записи с проверкой и генерацией короткой ссылки.
-        
+
         Args:
             original (str): Оригинальная длинная ссылка
             short (str, optional): Пользовательский вариант короткой ссылки
-        
+
         Returns:
             URLMap: Созданный объект
-        
+
         Raises:
             InvalidAPIUsage: При ошибках валидации или существовании ссылки
         """
         # Если короткая ссылка не передана или пустая - генерируем
         if not short:
             short = cls.get_unique_short_id()
-        
-        # Валидация короткой ссылки
-        if re.search(PATTERN_FOR_CHECK_URL, short) is None:
-            raise InvalidAPIUsage('Указано недопустимое имя для короткой ссылки')
-        
+
         # Проверка уникальности
         if cls.get_obj_by_short(short):
             raise InvalidAPIUsage('Предложенный вариант короткой ссылки уже существует.')
-        
+
         # Создание объекта
         url_map = cls(
             original=original,
             short=short
         )
-        
+
         try:
             db.session.add(url_map)
             db.session.commit()
             return url_map
         except IntegrityError:
             db.session.rollback()
-            raise InvalidAPIUsage('Ошибка при создании короткой ссылки')
-
-    # Оставляем старые методы для обратной совместимости
-    validate_data = classmethod(lambda cls, data: data)
-    create_obj = classmethod(lambda cls, data: cls.create(
-        original=data['url'], 
-        short=data.get('custom_id')
-    ))
+            raise InvalidAPIUsage('Предложенный вариант короткой ссылки уже существует.')
