@@ -3,11 +3,12 @@ import re
 from datetime import datetime
 
 from flask import url_for
+from sqlalchemy.exc import IntegrityError
 
 from yacut import db
 from yacut.constants import (MAX_LEN_ORIGINAL, MAX_LEN_SHORT,
                              STR_FOR_GEN_URL, PATTERN_FOR_CHECK_URL)
-from yacut.error_handlers import URLValidationError
+from yacut.error_handlers import URLValidationError, InvalidAPIUsage
 
 
 class URLMap(db.Model):
@@ -36,33 +37,55 @@ class URLMap(db.Model):
             if URLMap.query.filter_by(short=short_url).first() is None:
                 return short_url
 
-    @staticmethod
-    def get_obj_by_short(url):
+    @classmethod
+    def get_obj_by_short(cls, url):
         """Метод получает объект по его короткой ссылке."""
-        return URLMap.query.filter_by(short=url).first()
+        return cls.query.filter_by(short=url).first()
 
-    @staticmethod
-    def validate_data(data):
-        """Валидация полей модели."""
-        if not data:
-            raise URLValidationError('Отсутствует тело запроса')
-        elif 'url' not in data:
-            raise URLValidationError('"url" является обязательным полем!')
-        elif not data.get('custom_id'):
-            data['custom_id'] = URLMap.get_unique_short_id()
-        elif re.search(PATTERN_FOR_CHECK_URL, data['custom_id']) is None:
-            raise URLValidationError('Указано недопустимое имя для '
-                                     'короткой ссылки')
-        elif URLMap.get_obj_by_short(data['custom_id']) is not None:
-            raise URLValidationError('Предложенный вариант короткой ссылки '
-                                     'уже существует.')
-        return data
+    @classmethod
+    def create(cls, original, short=None):
+        """
+        Создание новой записи с проверкой и генерацией короткой ссылки.
+        
+        Args:
+            original (str): Оригинальная длинная ссылка
+            short (str, optional): Пользовательский вариант короткой ссылки
+        
+        Returns:
+            URLMap: Созданный объект
+        
+        Raises:
+            InvalidAPIUsage: При ошибках валидации или существовании ссылки
+        """
+        # Если короткая ссылка не передана или пустая - генерируем
+        if not short:
+            short = cls.get_unique_short_id()
+        
+        # Валидация короткой ссылки
+        if re.search(PATTERN_FOR_CHECK_URL, short) is None:
+            raise InvalidAPIUsage('Указано недопустимое имя для короткой ссылки')
+        
+        # Проверка уникальности
+        if cls.get_obj_by_short(short):
+            raise InvalidAPIUsage('Предложенный вариант короткой ссылки уже существует.')
+        
+        # Создание объекта
+        url_map = cls(
+            original=original,
+            short=short
+        )
+        
+        try:
+            db.session.add(url_map)
+            db.session.commit()
+            return url_map
+        except IntegrityError:
+            db.session.rollback()
+            raise InvalidAPIUsage('Ошибка при создании короткой ссылки')
 
-    @staticmethod
-    def create_obj(data):
-        """Метод для создания объекта."""
-        data = URLMap.validate_data(data)
-        url_obj = URLMap(original=data['url'], short=data['custom_id'])
-        db.session.add(url_obj)
-        db.session.commit()
-        return url_obj
+    # Оставляем старые методы для обратной совместимости
+    validate_data = classmethod(lambda cls, data: data)
+    create_obj = classmethod(lambda cls, data: cls.create(
+        original=data['url'], 
+        short=data.get('custom_id')
+    ))

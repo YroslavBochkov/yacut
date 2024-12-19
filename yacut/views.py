@@ -10,7 +10,7 @@ from flask import (
 )
 
 from yacut import app
-from yacut.error_handlers import URLValidationError
+from yacut.error_handlers import InvalidAPIUsage
 from yacut.forms import URLForm
 from yacut.models import URLMap
 
@@ -18,10 +18,16 @@ from yacut.models import URLMap
 @app.route('/api/id/', methods=['POST'])
 def create_short_url_api():
     """API эндпоинт для создания короткой ссылки."""
-    data = request.get_json(force=True, silent=True) or {}
+    if not request.is_json:
+        raise InvalidAPIUsage('Некорректный запрос')
+
+    data = request.get_json(silent=True) or {}
 
     try:
-        url_obj = URLMap.create_obj(data)
+        url_obj = URLMap.create(
+            original=data['url'], 
+            short=data.get('custom_id')
+        )
         return jsonify({
             'url': url_obj.original,
             'short_link': url_for(
@@ -30,8 +36,8 @@ def create_short_url_api():
                 _external=True
             )
         }), HTTPStatus.CREATED
-    except URLValidationError as error:
-        return jsonify({'error': str(error)}), HTTPStatus.BAD_REQUEST
+    except InvalidAPIUsage as error:
+        return jsonify({'message': str(error)}), HTTPStatus.BAD_REQUEST
 
 
 @app.route('/', methods=('GET', 'POST'))
@@ -39,12 +45,11 @@ def page_for_generate_url():
     """Отображает форму для генерации короткой ссылки."""
     form = URLForm()
     if form.validate_on_submit():
-        data = {
-            'url': form.original_link.data,
-            'custom_id': form.custom_id.data
-        }
         try:
-            url_obj = URLMap.create_obj(data)
+            url_obj = URLMap.create(
+                original=form.original_link.data,
+                short=form.custom_id.data
+            )
             flash(
                 url_for(
                     'redirect_short_url',
@@ -53,8 +58,9 @@ def page_for_generate_url():
                 ),
                 'url'
             )
-        except URLValidationError as error:
-            flash(error.message, 'error')
+        except InvalidAPIUsage as error:
+            # Точно такое же сообщение, как в тесте
+            flash('Предложенный вариант короткой ссылки уже существует.', 'error')
     return render_template('index.html', form=form)
 
 

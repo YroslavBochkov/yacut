@@ -33,10 +33,14 @@
                       <span style="color:red">{{ error }}</span>
                     {% endfor %}
                   {% endif %}
-                  {% with messages = get_flashed_messages(category_filter=["error"]) %}
+                  
+                  {# Добавляем флеш-сообщения об ошибках #}
+                  {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
-                      {% for message in messages %}
-                        <span style="color:red">{{ message }}</span>
+                      {% for category, message in messages %}
+                        {% if category == 'error' %}
+                          <span style="color:red">{{ message }}</span>
+                        {% endif %}
                       {% endfor %}
                     {% endif %}
                   {% endwith %}
