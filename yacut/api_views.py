@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from flask import jsonify, request, url_for
+from flask import jsonify, request
 
 from yacut import app
 from yacut.error_handlers import (
@@ -8,13 +8,11 @@ from yacut.error_handlers import (
     validate_url_map
 )
 from yacut.models import URLMap
+from yacut.settings import Config
 
 # Константы для сообщений
 INCORRECT_REQUEST = 'Некорректный запрос'
 ID_NOT_FOUND = 'Указанный id не найден'
-
-# Константа для имени view-функции
-REDIRECT_ENDPOINT = 'redirect_short_url'
 
 
 @app.route('/api/id/', methods=['POST'])
@@ -31,11 +29,7 @@ def generate_short_url():
         short=validated_data.get('custom_id')
     )
 
-    short_link = url_for(
-        REDIRECT_ENDPOINT,
-        url=url_map.short,
-        _external=True
-    )
+    short_link = Config.get_short_link(url_map.short)
 
     return jsonify(
         url=url_map.original,
