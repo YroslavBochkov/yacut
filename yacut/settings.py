@@ -1,4 +1,3 @@
-# yacut/settings.py
 from flask import url_for
 from yacut.constants import SHORT_URL_CHARS, MAX_LEN_SHORT
 
@@ -7,6 +6,9 @@ class Config:
 
     # Константа для имени view-функции
     REDIRECT_ENDPOINT = 'redirect_short_url'
+
+    # Максимальное число попыток генерации уникальной короткой ссылки
+    MAX_UNIQUE_ID_ATTEMPTS = 10
 
     # Регулярное выражение для короткой ссылки
     SHORT_URL_PATTERN = r'^[{}]{{1,{}}}$'.format(

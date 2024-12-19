@@ -40,7 +40,7 @@ def generate_short_url():
 @app.route('/api/id/<string:short>/', methods=['GET'])
 def get_original_url(short):
     """Метод API для получения оригинальной ссылки."""
-    url_obj = URLMap.get_obj_by_short(short)
+    url_obj = URLMap.get_by_short(short)
     if url_obj is None:
         raise InvalidAPIUsage(
             ID_NOT_FOUND,

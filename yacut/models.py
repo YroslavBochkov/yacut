@@ -2,7 +2,6 @@ import random
 import re
 from datetime import datetime
 
-from flask import url_for
 from sqlalchemy.exc import IntegrityError
 
 from yacut import db
@@ -27,14 +26,13 @@ class URLMap(db.Model):
         """Метод создает словарь из атрибутов объекта."""
         return dict(
             url=self.original,
-            short_link=url_for('redirect_short_url', url=self.short,
-                               _external=True)
+            short_link=Config.get_short_link(self.short)
         )
 
     @staticmethod
     def get_unique_short_id():
         """Метод создает уникальную короткую ссылку."""
-        while True:
+        for _ in range(Config.MAX_UNIQUE_ID_ATTEMPTS):
             short_url = ''.join(
                 random.choices(population=SHORT_URL_CHARS, k=6)
             )
@@ -42,9 +40,9 @@ class URLMap(db.Model):
                 return short_url
 
     @classmethod
-    def get_obj_by_short(cls, url):
+    def get_by_short(cls, short):
         """Метод получает объект по его короткой ссылке."""
-        return cls.query.filter_by(short=url).first()
+        return cls.query.filter_by(short=short).first()
 
     @classmethod
     def create(cls, original, short=None):
@@ -68,7 +66,7 @@ class URLMap(db.Model):
                 raise InvalidAPIUsage('Указано недопустимое имя для короткой ссылки')
 
             # Проверка уникальности
-            if cls.get_obj_by_short(short):
+            if cls.get_by_short(short):
                 raise InvalidAPIUsage('Предложенный вариант короткой ссылки уже существует.')
 
         # Генерация короткой ссылки, если не передана
