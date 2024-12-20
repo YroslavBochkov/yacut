@@ -1,4 +1,4 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
 {% block content %}
 <main>
   <section class="container my-5 px-4">
@@ -9,71 +9,54 @@
 
     <div class="container">
       <div class="row my-3">
-        <div class="col-sm">
-        </div>
+        <div class="col-sm"></div>
         <div class="col-sm">
           <form method="POST" novalidate>
             {{ form.csrf_token }}
             <div>
               <div>
                 {{ form.original_link(class="form-control form-control-lg py-2 mb-3", placeholder="Длинная ссылка") }}
-                <p>
-                  {% if form.original_link.errors %}
-                    {% for error in form.original_link.errors %}
-                      <span style="color:red">{{ error }}</span>
-                    {% endfor %}
-                  {% endif %}
-                </p>
+                {% for error in form.original_link.errors %}
+                  <span style="color:red">{{ error }}</span>
+                {% endfor %}
               </div>
               <div>
                 {{ form.custom_id(class="form-control form-control-lg py-2 mb-3", placeholder="Ваш вариант короткой ссылки") }}
-                <p>
-                  {% if form.custom_id.errors %}
-                    {% for error in form.custom_id.errors %}
-                      <span style="color:red">{{ error }}</span>
-                    {% endfor %}
-                  {% endif %}
-                  
-                  {# Добавляем флеш-сообщения об ошибках #}
-                  {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                      {% for category, message in messages %}
-                        {% if category == 'error' %}
-                          <span style="color:red">{{ message }}</span>
-                        {% endif %}
-                      {% endfor %}
+                {% for error in form.custom_id.errors %}
+                  <span style="color:red">{{ error }}</span>
+                {% endfor %}
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% for category, message in messages %}
+                    {% if category == 'error' %}
+                      <span style="color:red">{{ message }}</span>
                     {% endif %}
-                  {% endwith %}
-                </p>
+                  {% endfor %}
+                {% endwith %}
               </div>
               {{ form.submit(class="btn btn-primary") }}
             </div>
           </form>
         </div>
-        <div class="col-sm">
-        </div>
+        <div class="col-sm"></div>
       </div>
     </div>
     <div class="container">
-      <div class="row ">
-        <div class="col-sm">
-        </div>
+      <div class="row">
+        <div class="col-sm"></div>
         <div class="col-sm">
           <p class="text-center">
-            {% with messages = get_flashed_messages(category_filter=["url"]) %}
-              {% if messages %}
-                <h5 class="text-center">Ваша новая ссылка готова:</h5>
-                {% for message in messages %}
-                  <a href="{{ message }}">
-                    {{ message }}
-                  </a>
-                {% endfor %}
-              {% endif %}
+            <h5 class="text-center">Ваша новая ссылка готова:</h5>
+            {% with messages = get_flashed_messages() %}
+              {% for message in messages %}
+                <a href="{{ message }}">
+                  {{ message }}
+                </a>
+              {% endfor %}
             {% endwith %}
           </p>
         </div>
-        <div class="col-sm">
-        </div>
+        <div class="col-sm"></div>
       </div>
     </div>
   </section>
