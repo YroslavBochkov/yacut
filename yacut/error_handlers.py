@@ -1,4 +1,3 @@
-# yacut/error_handlers.py
 from http import HTTPStatus
 import re
 from flask import jsonify, render_template
@@ -13,10 +12,7 @@ from yacut.settings import Config
 
 class URLValidationError(Exception):
     """Ошибка для валидаторов генерации короткой ссылки."""
-
-    def __init__(self, message):
-        super().__init__()
-        self.message = message
+    pass
 
 
 class InvalidAPIUsage(Exception):
@@ -25,7 +21,6 @@ class InvalidAPIUsage(Exception):
     status_code = HTTPStatus.BAD_REQUEST
 
     def __init__(self, message, status_code=None):
-        super().__init__()
         self.message = message
         if status_code is not None:
             self.status_code = status_code
@@ -78,7 +73,7 @@ def invalid_api_usage(error):
 @app.errorhandler(URLValidationError)
 def handle_validation_error(error):
     """Хендлер для ошибок валидации."""
-    return jsonify({'message': error.message}), HTTPStatus.BAD_REQUEST
+    return jsonify({'message': str(error)}), HTTPStatus.BAD_REQUEST
 
 
 @app.errorhandler(404)
