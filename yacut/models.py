@@ -6,8 +6,8 @@ from sqlalchemy.exc import IntegrityError
 
 from yacut import db
 from yacut.constants import (
-    MAX_LEN_ORIGINAL, 
-    MAX_LEN_SHORT, 
+    MAX_LEN_ORIGINAL,
+    MAX_LEN_SHORT,
     SHORT_URL_CHARS
 )
 from yacut.settings import Config
@@ -16,16 +16,24 @@ from yacut.error_handlers import InvalidAPIUsage
 
 class URLMap(db.Model):
     """Модель для сохранения оригинальной и короткой ссылки на источник."""
-
     class URLValidationError(Exception):
         """Ошибка для валидаторов генерации короткой ссылки."""
 
-    # Константы для сообщений
     class Messages:
-        ERROR_LONG_URL = f'Превышена максимальная длина ссылки в {MAX_LEN_ORIGINAL} символов'
-        ERROR_INVALID_SHORT_URL = 'Указано недопустимое имя для короткой ссылки'
-        ERROR_DUPLICATE_SHORT_URL = 'Предложенный вариант короткой ссылки уже существует.'
-        ERROR_GENERATION_FAILED = 'Не удалось сгенерировать уникальную короткую ссылку'
+        ERROR_LONG_URL = (
+            f'Превышена максимальная длина ссылки в '
+            f'{MAX_LEN_ORIGINAL} символов'
+        )
+        ERROR_INVALID_SHORT_URL = (
+            'Указано недопустимое имя для короткой ссылки'
+        )
+        ERROR_DUPLICATE_SHORT_URL = (
+            'Предложенный вариант короткой ссылки уже существует.'
+        )
+        ERROR_GENERATION_FAILED = (
+            'Не удалось сгенерировать уникальную короткую '
+            'ссылку'
+        )
 
     id = db.Column(db.Integer, primary_key=True)
     original = db.Column(db.String(MAX_LEN_ORIGINAL), nullable=False)
@@ -48,8 +56,9 @@ class URLMap(db.Model):
             )
             if URLMap.query.filter_by(short=short_url).first() is None:
                 return short_url
-        
-        raise URLMap.URLValidationError(URLMap.Messages.ERROR_GENERATION_FAILED)
+        raise URLMap.URLValidationError(
+            URLMap.Messages.ERROR_GENERATION_FAILED
+        )
 
     @classmethod
     def get_by_short(cls, short):
@@ -61,42 +70,35 @@ class URLMap(db.Model):
 
     @classmethod
     def create(cls, original, short=None):
-        """
-        Создание новой записи с проверкой и генерацией короткой ссылки.
-        """
-        # Проверка длины оригинальной ссылки
+        """Создание новой записи с проверкой и генерацией короткой ссылки."""
         if len(original) > MAX_LEN_ORIGINAL:
             raise cls.URLValidationError(cls.Messages.ERROR_LONG_URL)
 
-        # Проверка пользовательского варианта короткой ссылки
         if short:
-            # Проверка длины
             if len(short) > MAX_LEN_SHORT:
-                raise cls.URLValidationError(cls.Messages.ERROR_INVALID_SHORT_URL)
-
-            # Проверка формата
+                raise cls.URLValidationError(
+                    cls.Messages.ERROR_INVALID_SHORT_URL
+                )
             if not re.match(Config.SHORT_URL_PATTERN, short):
-                raise cls.URLValidationError(cls.Messages.ERROR_INVALID_SHORT_URL)
-
-            # Проверка уникальности
+                raise cls.URLValidationError(
+                    cls.Messages.ERROR_INVALID_SHORT_URL
+                )
             if cls.query.filter_by(short=short).first():
-                raise cls.URLValidationError(cls.Messages.ERROR_DUPLICATE_SHORT_URL)
+                raise cls.URLValidationError(
+                    cls.Messages.ERROR_DUPLICATE_SHORT_URL
+                )
 
-        # Генерация короткой ссылки, если не передана
         if not short:
             short = cls.get_unique_short_id()
 
-        # Создание нового объекта
-        url_map = cls(
-            original=original,
-            short=short
-        )
+        url_map = cls(original=original, short=short)
 
-        # Сохранение
         try:
             db.session.add(url_map)
             db.session.commit()
             return url_map
         except IntegrityError:
             db.session.rollback()
-            raise cls.URLValidationError(cls.Messages.ERROR_DUPLICATE_SHORT_URL)
+            raise cls.URLValidationError(
+                cls.Messages.ERROR_DUPLICATE_SHORT_URL
+            )
