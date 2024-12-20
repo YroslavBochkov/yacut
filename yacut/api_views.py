@@ -1,9 +1,9 @@
 from http import HTTPStatus
-
-from flask import jsonify, request
+from flask import jsonify, request, abort
+from werkzeug.exceptions import BadRequest
 
 from yacut import app
-from yacut.error_handlers import InvalidAPIUsage, URLValidationError
+from yacut.error_handlers import InvalidAPIUsage
 from yacut.models import URLMap
 from yacut.settings import Config
 
@@ -14,14 +14,17 @@ def generate_short_url():
     if not request.is_json:
         raise InvalidAPIUsage('Некорректный запрос')
 
-    data = request.get_json(silent=True) or {}
-    
+    try:
+        data = request.get_json(force=True, silent=False)
+    except BadRequest:
+        return jsonify({'message': 'Отсутствует тело запроса'}), HTTPStatus.BAD_REQUEST
+
     # Проверки во входящих данных
     if not data:
-        raise InvalidAPIUsage('Отсутствует тело запроса')
-    
+        return jsonify({'message': 'Отсутствует тело запроса'}), HTTPStatus.BAD_REQUEST
+
     if 'url' not in data:
-        raise InvalidAPIUsage('"url" является обязательным полем!')
+        return jsonify({'message': '"url" является обязательным полем!'}), HTTPStatus.BAD_REQUEST
 
     try:
         url_map = URLMap.create(
