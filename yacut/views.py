@@ -24,7 +24,7 @@ def page_for_generate_url():
             short=form.custom_id.data or None
         )
         flash(Config.get_short_link(url_map.short), 'url')
-    except URLMap.URLValidationError as error:
+    except URLMap.URLValidationError:
         flash('Предложенный вариант короткой ссылки уже существует.', 'error')
 
     return render_template('index.html', form=form)
