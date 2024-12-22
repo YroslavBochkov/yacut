@@ -26,35 +26,18 @@
                   <span style="color:red">{{ error }}</span>
                 {% endfor %}
 
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                  {% for category, message in messages %}
-                    {% if category == 'error' %}
-                      <span style="color:red">{{ message }}</span>
-                    {% endif %}
+                {% with messages = get_flashed_messages() %}
+                  {% for message in messages %}
+                    <h5 class="text-center">Ваша новая ссылка готова:</h5>
+                    <a href="{{ message }}">
+                      {{ message }}
+                    </a>
                   {% endfor %}
                 {% endwith %}
               </div>
               {{ form.submit(class="btn btn-primary") }}
             </div>
           </form>
-        </div>
-        <div class="col-sm"></div>
-      </div>
-    </div>
-    <div class="container">
-      <div class="row">
-        <div class="col-sm"></div>
-        <div class="col-sm">
-          <p class="text-center">
-            <h5 class="text-center">Ваша новая ссылка готова:</h5>
-            {% with messages = get_flashed_messages() %}
-              {% for message in messages %}
-                <a href="{{ message }}">
-                  {{ message }}
-                </a>
-              {% endfor %}
-            {% endwith %}
-          </p>
         </div>
         <div class="col-sm"></div>
       </div>

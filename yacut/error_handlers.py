@@ -3,11 +3,6 @@ from flask import jsonify, render_template
 from yacut import app, db
 
 
-class URLValidationError(Exception):
-    """Ошибка для валидаторов генерации короткой ссылки."""
-    pass
-
-
 class InvalidAPIUsage(Exception):
     """Ошибка для API-интерфейса."""
     status_code = HTTPStatus.BAD_REQUEST

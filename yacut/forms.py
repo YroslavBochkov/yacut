@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import SubmitField, URLField
+from wtforms import URLField, SubmitField
 from wtforms.validators import (
     DataRequired, Length, Optional, URL, ValidationError, Regexp
 )
@@ -27,7 +27,7 @@ class URLForm(FlaskForm):
     original_link = URLField(
         ORIGINAL_LINK_LABEL,
         validators=[
-            Length(min=1, max=MAX_LEN_ORIGINAL),
+            Length(max=MAX_LEN_ORIGINAL),
             DataRequired(message=REQUIRED_FIELD_MESSAGE),
             URL(require_tld=True, message=INCORRECT_URL_MESSAGE)
         ]
@@ -35,7 +35,7 @@ class URLForm(FlaskForm):
     custom_id = URLField(
         CUSTOM_ID_LABEL,
         validators=[
-            Length(min=1, max=MAX_LEN_SHORT),
+            Length(max=MAX_LEN_SHORT),
             Regexp(
                 regex=Config.SHORT_URL_PATTERN,
                 message=INVALID_CHARS_MESSAGE
@@ -43,11 +43,9 @@ class URLForm(FlaskForm):
             Optional()
         ]
     )
+    submit = SubmitField(CREATE_BUTTON_LABEL)
 
     def validate_custom_id(self, field):
         """Валидация короткой ссылки с проверкой в базе данных."""
-        if field.data:
-            if URLMap.query.filter_by(short=field.data).first():
-                raise ValidationError(DUPLICATE_SHORT_LINK_MESSAGE)
-
-    submit = SubmitField(CREATE_BUTTON_LABEL)
+        if field.data and URLMap.query.filter_by(short=field.data).first():
+            raise ValidationError(DUPLICATE_SHORT_LINK_MESSAGE)
