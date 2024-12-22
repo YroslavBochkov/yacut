@@ -1,38 +1,27 @@
 import random
 from datetime import datetime
-
-from sqlalchemy.exc import IntegrityError
+from flask import url_for
 
 from yacut import db
 from yacut.constants import (
     MAX_LEN_ORIGINAL,
     MAX_LEN_SHORT,
-    SHORT_URL_CHARS
+    SHORT_URL_CHARS,
+    REDIRECT_VIEW
 )
-from yacut.settings import Config
 
 
 class URLMap(db.Model):
     """Модель для сохранения оригинальной и короткой ссылки на источник."""
-    class URLValidationError(Exception):
-        """Ошибка для валидаторов генерации короткой ссылки."""
+    class URLValidationError(ValueError):
+        """Кастомное исключение для ошибок валидации."""
+        pass
 
-    GENERATED_SHORT_ID_LENGTH = 6
+    GENERATED_SHORT_LENGTH = 6
 
-    ERROR_LONG_URL = (
-        f'Превышена максимальная длина ссылки в '
-        f'{MAX_LEN_ORIGINAL} символов'
-    )
-    ERROR_INVALID_SHORT_URL = (
-        'Указано недопустимое имя для короткой ссылки'
-    )
-    ERROR_DUPLICATE_SHORT_URL = (
-        'Предложенный вариант короткой ссылки уже существует.'
-    )
-    ERROR_GENERATION_FAILED = (
-        'Не удалось сгенерировать уникальную короткую '
-        'ссылку'
-    )
+    ERROR_INVALID_SHORT_URL = 'Указано недопустимое имя для короткой ссылки'
+    ERROR_DUPLICATE_SHORT_URL = 'Предложенный вариант короткой ссылки уже существует.'
+    ERROR_GENERATION_FAILED = 'Не удалось сгенерировать уникальную короткую ссылку'
     ERROR_NOT_FOUND = 'Указанный id не найден'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -44,8 +33,12 @@ class URLMap(db.Model):
         """Метод создает словарь из атрибутов объекта."""
         return dict(
             url=self.original,
-            short_link=Config.get_short_link(self.short)
+            short_link=self.get_short_link()
         )
+
+    def get_short_link(self):
+        """Генерация короткой ссылки."""
+        return url_for(REDIRECT_VIEW, url=self.short, _external=True)
 
     @staticmethod
     def _get_or_raise(short, error_message):
@@ -58,11 +51,11 @@ class URLMap(db.Model):
     @staticmethod
     def get_unique_short_id():
         """Метод создает уникальную короткую ссылку."""
-        for _ in range(Config.MAX_UNIQUE_ID_ATTEMPTS):
+        for _ in range(10):
             short_url = ''.join(
                 random.choices(
                     population=SHORT_URL_CHARS,
-                    k=URLMap.GENERATED_SHORT_ID_LENGTH
+                    k=URLMap.GENERATED_SHORT_LENGTH
                 )
             )
             if URLMap.query.filter_by(short=short_url).first() is None:

@@ -5,7 +5,6 @@ from flask import jsonify, request
 from yacut import app
 from yacut.error_handlers import InvalidAPIUsage
 from yacut.models import URLMap
-from yacut.settings import Config
 
 INCORRECT_REQUEST_MESSAGE = 'Некорректный запрос'
 EMPTY_REQUEST_BODY_MESSAGE = 'Отсутствует тело запроса'
@@ -29,9 +28,9 @@ def generate_short_url():
         )
         return jsonify({
             'url': url_map.original,
-            'short_link': Config.get_short_link(url_map.short)
+            'short_link': url_map.get_short_link()
         }), HTTPStatus.CREATED
-    except URLMap.URLValidationError as e:
+    except ValueError as e:
         raise InvalidAPIUsage(str(e))
 
 
@@ -41,5 +40,5 @@ def get_original_url(short):
     try:
         url_map = URLMap.get_by_short(short)
         return jsonify({'url': url_map.original}), HTTPStatus.OK
-    except URLMap.URLValidationError as e:
+    except ValueError as e:
         raise InvalidAPIUsage(str(e), status_code=404)

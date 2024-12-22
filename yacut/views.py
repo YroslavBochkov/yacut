@@ -8,7 +8,6 @@ from flask import (
 from yacut import app
 from yacut.forms import URLForm
 from yacut.models import URLMap
-from yacut.settings import Config
 
 
 @app.route('/', methods=('GET', 'POST'))
@@ -24,8 +23,8 @@ def page_for_generate_url():
             original=form.original_link.data,
             short=form.custom_id.data or None
         )
-        flash(Config.get_short_link(url_map.short), 'url')
-    except URLMap.URLValidationError as e:
+        flash(url_map.get_short_link(), 'url')
+    except ValueError as e:
         flash(str(e), 'error')
 
     return render_template('index.html', form=form)
@@ -36,5 +35,5 @@ def redirect_short_url(url):
     """Выполняет переадресацию с короткой ссылки на оригинальную."""
     try:
         return redirect(URLMap.get_by_short(url).original)
-    except URLMap.URLValidationError:
+    except ValueError:
         abort(404)
