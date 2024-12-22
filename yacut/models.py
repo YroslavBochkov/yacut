@@ -15,13 +15,17 @@ class URLMap(db.Model):
     """Модель для сохранения оригинальной и короткой ссылки на источник."""
     class URLValidationError(ValueError):
         """Кастомное исключение для ошибок валидации."""
-        pass
 
     GENERATED_SHORT_LENGTH = 6
 
     ERROR_INVALID_SHORT_URL = 'Указано недопустимое имя для короткой ссылки'
-    ERROR_DUPLICATE_SHORT_URL = 'Предложенный вариант короткой ссылки уже существует.'
-    ERROR_GENERATION_FAILED = 'Не удалось сгенерировать уникальную короткую ссылку'
+    ERROR_DUPLICATE_SHORT_URL = (
+        'Предложенный вариант короткой ссылки уже существует.'
+    )
+    ERROR_GENERATION_FAILED = (
+        'Не удалось сгенерировать уникальную короткую ссылку'
+    )
+
     ERROR_NOT_FOUND = 'Указанный id не найден'
 
     id = db.Column(db.Integer, primary_key=True)

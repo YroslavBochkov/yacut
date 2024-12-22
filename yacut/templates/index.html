@@ -26,14 +26,16 @@
                   <span style="color:red">{{ error }}</span>
                 {% endfor %}
 
-                {% with messages = get_flashed_messages() %}
-                  {% for message in messages %}
-                    <h5 class="text-center">Ваша новая ссылка готова:</h5>
-                    <a href="{{ message }}">
-                      {{ message }}
-                    </a>
-                  {% endfor %}
-                {% endwith %}
+                {% if short_url %}
+                  <h5 class="text-center">Ваша новая ссылка готова:</h5>
+                  <a href="{{ request.host_url + short_url }}">
+                    {{ request.host_url + short_url }}
+                  </a>
+                {% endif %}
+
+                {% if error %}
+                  <span style="color:red">{{ error }}</span>
+                {% endif %}
               </div>
               {{ form.submit(class="btn btn-primary") }}
             </div>

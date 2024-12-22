@@ -1,33 +1,35 @@
 from flask import (
-    flash,
     redirect,
     render_template,
     abort
 )
-
 from yacut import app
 from yacut.forms import URLForm
 from yacut.models import URLMap
+
+DUPLICATE_SHORT_URL_ERROR = (
+    'Предложенный вариант короткой ссылки уже существует.'
+)
 
 
 @app.route('/', methods=('GET', 'POST'))
 def page_for_generate_url():
     """Отображает форму для генерации короткой ссылки."""
     form = URLForm()
-
     if not form.validate_on_submit():
         return render_template('index.html', form=form)
-
     try:
         url_map = URLMap.create(
             original=form.original_link.data,
             short=form.custom_id.data or None
         )
-        flash(url_map.get_short_link(), 'url')
+        return render_template(
+            'index.html',
+            form=form,
+            short_url=url_map.short
+        )
     except ValueError as e:
-        flash(str(e), 'error')
-
-    return render_template('index.html', form=form)
+        return render_template('index.html', form=form, error=str(e))
 
 
 @app.route('/<string:url>')
