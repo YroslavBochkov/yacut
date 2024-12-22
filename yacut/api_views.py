@@ -11,6 +11,7 @@ INCORRECT_REQUEST_MESSAGE = 'Некорректный запрос'
 EMPTY_REQUEST_BODY_MESSAGE = 'Отсутствует тело запроса'
 REQUIRED_URL_FIELD_MESSAGE = '"url" является обязательным полем!'
 
+
 @app.route('/api/id/', methods=['POST'])
 def generate_short_url():
     """Метод API для генерации короткой ссылки."""
@@ -33,8 +34,12 @@ def generate_short_url():
     except URLMap.URLValidationError as e:
         raise InvalidAPIUsage(str(e))
 
+
 @app.route('/api/id/<string:short>/', methods=['GET'])
 def get_original_url(short):
     """Метод API для получения оригинальной ссылки."""
-    url_map = URLMap.get_by_short(short)
-    return jsonify({'url': url_map.original}), HTTPStatus.OK
+    try:
+        url_map = URLMap.get_by_short(short)
+        return jsonify({'url': url_map.original}), HTTPStatus.OK
+    except URLMap.URLValidationError as e:
+        raise InvalidAPIUsage(str(e), status_code=404)
