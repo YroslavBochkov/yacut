@@ -3,7 +3,9 @@ from flask import (
     redirect,
     render_template,
     abort,
-    flash
+    flash,
+    url_for,
+    request
 )
 from yacut import app
 from yacut.forms import URLForm
@@ -25,10 +27,11 @@ def page_for_generate_url():
             original=form.original_link.data,
             short=form.custom_id.data
         )
+        short_url = url_for('redirect_short_url', url=url_map.short, _external=True)
         return render_template(
             'index.html',
             form=form,
-            short_url=url_map.short
+            short_url=short_url
         )
     except (ValueError, RuntimeError) as e:
         flash(str(e))
