@@ -1,12 +1,13 @@
 from http import HTTPStatus
+
 from flask import (
-    redirect,
-    render_template,
     abort,
     flash,
-    url_for,
-    request
+    redirect,
+    render_template,
+    url_for
 )
+
 from yacut import app
 from yacut.forms import URLForm
 from yacut.models import URLMap
@@ -41,7 +42,8 @@ def page_for_generate_url():
 @app.route('/<string:url>')
 def redirect_short_url(url):
     """Выполняет переадресацию с короткой ссылки на оригинальную."""
-    url_map = URLMap.query.filter_by(short=url).first()
-    if not url_map:
+    try:
+        url_map = URLMap.get(url)
+        return redirect(url_map.original)
+    except URLMap.URLValidationError:
         abort(HTTPStatus.NOT_FOUND)
-    return redirect(url_map.original)

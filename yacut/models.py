@@ -26,6 +26,8 @@ class URLMap(db.Model):
         'Не удалось сгенерировать уникальную короткую ссылку'
     )
     ERROR_NOT_FOUND = 'Указанный id не найден'
+    ERROR_EMPTY_ORIGINAL = 'Отсутствует оригинальная ссылка'
+    ERROR_LONG_ORIGINAL = 'Слишком длинная оригинальная ссылка'
 
     id = db.Column(db.Integer, primary_key=True)
     original = db.Column(db.String(MAX_LEN_ORIGINAL), nullable=False)
@@ -61,13 +63,29 @@ class URLMap(db.Model):
     def get(short):
         """Метод получает объект по его короткой ссылке."""
         result = URLMap.query.filter_by(short=short).first()
-        if result is None:
+        if not result:
             raise URLMap.URLValidationError(URLMap.ERROR_NOT_FOUND)
         return result
 
     @staticmethod
     def create(original, short=None):
         """Создание новой записи с проверкой и генерацией короткой ссылки."""
+        if not original:
+            raise URLMap.URLValidationError(URLMap.ERROR_EMPTY_ORIGINAL)
+
+        if len(original) > MAX_LEN_ORIGINAL:
+            raise URLMap.URLValidationError(URLMap.ERROR_LONG_ORIGINAL)
+
+        if short:
+            if len(short) > MAX_LEN_SHORT:
+                raise URLMap.URLValidationError(
+                    URLMap.ERROR_INVALID_SHORT_URL
+                )
+            if not re.match(Config.SHORT_URL_PATTERN, short):
+                raise URLMap.URLValidationError(
+                    URLMap.ERROR_INVALID_SHORT_URL
+                )
+
         if not short:
             short = URLMap.get_unique_short()
 
@@ -80,15 +98,3 @@ class URLMap(db.Model):
         db.session.add(url_map)
         db.session.commit()
         return url_map
-
-    @classmethod
-    def validate_short(cls, short):
-        """Валидация короткой ссылки."""
-        if len(short) > MAX_LEN_SHORT:
-            raise cls.URLValidationError(
-                cls.ERROR_INVALID_SHORT_URL
-            )
-        if not re.match(Config.SHORT_URL_PATTERN, short):
-            raise cls.URLValidationError(
-                cls.ERROR_INVALID_SHORT_URL
-            )
