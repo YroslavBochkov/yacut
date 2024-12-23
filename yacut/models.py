@@ -10,7 +10,7 @@ from yacut.constants import (
     SHORT_URL_CHARS,
     REDIRECT_VIEW
 )
-from yacut.settings import Config
+from yacut.constants import Config
 
 
 class URLMap(db.Model):

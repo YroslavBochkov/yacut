@@ -5,7 +5,7 @@ from yacut import app
 from yacut.error_handlers import InvalidAPIUsage
 from yacut.models import URLMap
 from yacut.constants import MAX_LEN_SHORT
-from yacut.settings import Config
+from yacut.constants import Config
 
 INCORRECT_REQUEST_MESSAGE = 'Некорректный запрос'
 EMPTY_REQUEST_BODY_MESSAGE = 'Отсутствует тело запроса'

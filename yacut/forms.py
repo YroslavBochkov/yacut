@@ -5,7 +5,7 @@ from wtforms.validators import (
 )
 
 from yacut.constants import MAX_LEN_ORIGINAL, MAX_LEN_SHORT
-from yacut.settings import Config
+from yacut.constants import Config
 from yacut.models import URLMap
 
 ORIGINAL_LINK_LABEL = 'Длинная ссылка'
