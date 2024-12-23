@@ -36,6 +36,6 @@ def page_for_generate_url():
 def redirect_short_url(url):
     """Выполняет переадресацию с короткой ссылки на оригинальную."""
     try:
-        return redirect(URLMap.get_by_short(url).original)
+        return redirect(URLMap.get(url).original)
     except ValueError:
         abort(404)

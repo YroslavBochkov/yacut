@@ -1,4 +1,5 @@
 import random
+import re
 from datetime import datetime
 from flask import url_for
 
@@ -9,14 +10,13 @@ from yacut.constants import (
     SHORT_URL_CHARS,
     REDIRECT_VIEW
 )
+from yacut.settings import Config
 
 
 class URLMap(db.Model):
     """Модель для сохранения оригинальной и короткой ссылки на источник."""
     class URLValidationError(ValueError):
         """Кастомное исключение для ошибок валидации."""
-
-    GENERATED_SHORT_LENGTH = 6
 
     ERROR_INVALID_SHORT_URL = 'Указано недопустимое имя для короткой ссылки'
     ERROR_DUPLICATE_SHORT_URL = (
@@ -25,7 +25,6 @@ class URLMap(db.Model):
     ERROR_GENERATION_FAILED = (
         'Не удалось сгенерировать уникальную короткую ссылку'
     )
-
     ERROR_NOT_FOUND = 'Указанный id не найден'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -45,47 +44,32 @@ class URLMap(db.Model):
         return url_for(REDIRECT_VIEW, url=self.short, _external=True)
 
     @staticmethod
-    def _get_or_raise(short, error_message):
-        """Получает объект или вызывает исключение."""
-        result = URLMap.query.filter_by(short=short).first()
-        if result is None:
-            raise URLMap.URLValidationError(error_message)
-        return result
-
-    @staticmethod
-    def get_unique_short_id():
+    def get_unique_short():
         """Метод создает уникальную короткую ссылку."""
-        for _ in range(10):
-            short_url = ''.join(
+        for _ in range(Config.MAX_UNIQUE_SHORT_ATTEMPTS):
+            short = ''.join(
                 random.choices(
                     population=SHORT_URL_CHARS,
-                    k=URLMap.GENERATED_SHORT_LENGTH
+                    k=Config.GENERATED_SHORT_LENGTH
                 )
             )
-            if URLMap.query.filter_by(short=short_url).first() is None:
-                return short_url
+            if not URLMap.query.filter_by(short=short).first():
+                return short
         raise RuntimeError(URLMap.ERROR_GENERATION_FAILED)
 
     @staticmethod
-    def get_by_short(short):
+    def get(short):
         """Метод получает объект по его короткой ссылке."""
-        return URLMap._get_or_raise(short, URLMap.ERROR_NOT_FOUND)
+        result = URLMap.query.filter_by(short=short).first()
+        if result is None:
+            raise URLMap.URLValidationError(URLMap.ERROR_NOT_FOUND)
+        return result
 
     @staticmethod
     def create(original, short=None):
         """Создание новой записи с проверкой и генерацией короткой ссылки."""
-        if short:
-            if len(short) > MAX_LEN_SHORT:
-                raise URLMap.URLValidationError(
-                    URLMap.ERROR_INVALID_SHORT_URL
-                )
-            if not all(char.isascii() and char.isalnum() for char in short):
-                raise URLMap.URLValidationError(
-                    URLMap.ERROR_INVALID_SHORT_URL
-                )
-
         if not short:
-            short = URLMap.get_unique_short_id()
+            short = URLMap.get_unique_short()
 
         if URLMap.query.filter_by(short=short).first():
             raise URLMap.URLValidationError(
@@ -96,3 +80,15 @@ class URLMap(db.Model):
         db.session.add(url_map)
         db.session.commit()
         return url_map
+
+    @classmethod
+    def validate_short(cls, short):
+        """Валидация короткой ссылки."""
+        if len(short) > MAX_LEN_SHORT:
+            raise cls.URLValidationError(
+                cls.ERROR_INVALID_SHORT_URL
+            )
+        if not re.match(Config.SHORT_URL_PATTERN, short):
+            raise cls.URLValidationError(
+                cls.ERROR_INVALID_SHORT_URL
+            )
