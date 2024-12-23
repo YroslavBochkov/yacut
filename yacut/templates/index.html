@@ -11,6 +11,16 @@
       <div class="row my-3">
         <div class="col-sm"></div>
         <div class="col-sm">
+          {% with messages = get_flashed_messages() %}
+            {% if messages %}
+              {% for message in messages %}
+                <div class="alert alert-danger" role="alert">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+
           <form method="POST" novalidate>
             {{ form.csrf_token }}
             <div>
@@ -28,13 +38,9 @@
 
                 {% if short_url %}
                   <h5 class="text-center">Ваша новая ссылка готова:</h5>
-                  <a href="{{ request.host_url + short_url }}">
-                    {{ request.host_url + short_url }}
+                  <a href="{{ url_for('redirect_short_url', url=short_url, _external=True) }}">
+                    {{ url_for('redirect_short_url', url=short_url, _external=True) }}
                   </a>
-                {% endif %}
-
-                {% if error %}
-                  <span style="color:red">{{ error }}</span>
                 {% endif %}
               </div>
               {{ form.submit(class="btn btn-primary") }}

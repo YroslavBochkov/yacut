@@ -8,6 +8,8 @@
 
 ## Примеры запросов к API, варианты ответов и ошибок приведены в спецификации openapi.yml
 
+[Документация API](openapi.yml)
+
 # Запуск проекта:
 Клонировать репозиторий и перейти в него в командной строке:
 
@@ -61,9 +63,11 @@ flask db upgrade
 flask run
 ```
 
-[![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/Flask-3.0.2-green?logo=flask)](https://flask.palletsprojects.com/)
-[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0.21-red?logo=sqlalchemy)](https://www.sqlalchemy.org/)
+## Технологический стек проекта:
+- Python версии 3.9 и выше
+- Веб-фреймворк Flask версии 3.0.2
+- ORM SQLAlchemy версии 2.0.21
+
 
 ## Автор
 
