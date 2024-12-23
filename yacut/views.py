@@ -28,7 +28,9 @@ def page_for_generate_url():
             original=form.original_link.data,
             short=form.custom_id.data
         )
-        short_url = url_for('redirect_short_url', url=url_map.short, _external=True)
+        short_url = url_for(
+            'redirect_short_url', url=url_map.short, _external=True
+        )
         return render_template(
             'index.html',
             form=form,
