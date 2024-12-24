@@ -1,3 +1,4 @@
+import re
 from http import HTTPStatus
 
 from flask import jsonify, request
@@ -5,6 +6,10 @@ from flask import jsonify, request
 from yacut import app
 from yacut.error_handlers import InvalidAPIUsage
 from yacut.models import URLMap
+from yacut.constants import (
+    MAXIMUM_LENGTH_SHORT,
+    SHORT
+)
 
 INCORRECT_REQUEST_MESSAGE = 'Некорректный запрос'
 EMPTY_REQUEST_BODY_MESSAGE = 'Отсутствует тело запроса'
@@ -23,18 +28,30 @@ def generate_short_url():
         raise InvalidAPIUsage(EMPTY_REQUEST_BODY_MESSAGE)
     if 'url' not in data:
         raise InvalidAPIUsage(REQUIRED_URL_FIELD_MESSAGE)
-
+    short = data.get('custom_id')
+    if short:
+        if len(short) > MAXIMUM_LENGTH_SHORT:
+            raise InvalidAPIUsage(INVALID_SHORT_URL_MESSAGE)
+        if not re.match(SHORT, short):
+            raise InvalidAPIUsage(INVALID_SHORT_URL_MESSAGE)
     try:
         url_map = URLMap.create(
             original=data['url'],
-            short=data.get('custom_id')
+            short=short
         )
         return jsonify({
             'url': url_map.original,
             'short_link': url_map.get_short_link()
         }), HTTPStatus.CREATED
-    except (URLMap.URLValidationError, ValueError, RuntimeError) as e:
-        raise InvalidAPIUsage(str(e), status_code=HTTPStatus.BAD_REQUEST)
+    except (
+        URLMap.URLValidationError,
+        ValueError,
+        RuntimeError
+    ) as e:
+        raise InvalidAPIUsage(
+            str(e),
+            status_code=HTTPStatus.BAD_REQUEST
+        )
 
 
 @app.route('/api/id/<string:short>/', methods=['GET'])

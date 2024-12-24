@@ -1,10 +1,19 @@
 from flask_wtf import FlaskForm
-from wtforms import URLField, SubmitField
+from wtforms import SubmitField, URLField
 from wtforms.validators import (
-    DataRequired, Length, Optional, URL, ValidationError, Regexp
+    DataRequired,
+    Length,
+    Optional,
+    Regexp,
+    URL,
+    ValidationError
 )
 
-from yacut.constants import MAXIMUM_LENGTH_ORIGINAL, MAXIMUM_LENGTH_SHORT, SHORT
+from yacut.constants import (
+    MAXIMUM_LENGTH_ORIGINAL,
+    MAXIMUM_LENGTH_SHORT,
+    SHORT
+)
 from yacut.models import URLMap
 
 ORIGINAL_LINK_LABEL = 'Длинная ссылка'
