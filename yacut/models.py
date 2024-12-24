@@ -1,4 +1,5 @@
 import random
+import re
 from datetime import datetime
 from flask import url_for
 
@@ -7,7 +8,8 @@ from yacut.constants import (
     MAXIMUM_LENGTH_ORIGINAL,
     MAXIMUM_LENGTH_SHORT,
     SHORT_URL_CHARS,
-    GENERATED_SHORT_LENGTH
+    GENERATED_SHORT_LENGTH,
+    SHORT
 )
 
 
@@ -69,8 +71,24 @@ class URLMap(db.Model):
         raise URLMap.URLValidationError(URLMap.ERROR_NOT_FOUND)
 
     @staticmethod
-    def create(original, short=None):
+    def create(original, short=None, validate=False):
         """Создание новой записи с проверкой и генерацией короткой ссылки."""
+        if validate:
+            if len(original) > MAXIMUM_LENGTH_ORIGINAL:
+                raise URLMap.URLValidationError(
+                    'Слишком длинная оригинальная ссылка'
+                )
+
+            if short:
+                if len(short) > MAXIMUM_LENGTH_SHORT:
+                    raise URLMap.URLValidationError(
+                        URLMap.ERROR_INVALID_SHORT_URL
+                    )
+                if not re.match(SHORT, short):
+                    raise URLMap.URLValidationError(
+                        URLMap.ERROR_INVALID_SHORT_URL
+                    )
+
         if not short:
             short = URLMap.get_unique_short()
 
