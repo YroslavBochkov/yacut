@@ -8,7 +8,6 @@ from yacut.constants import (
     MAXIMUM_LENGTH_ORIGINAL,
     MAXIMUM_LENGTH_SHORT,
     SHORT_URL_CHARS,
-    REDIRECT_VIEW,
     GENERATED_SHORT_LENGTH,
     SHORT
 )
@@ -44,7 +43,7 @@ class URLMap(db.Model):
 
     def get_short_link(self):
         """Генерация короткой ссылки."""
-        return url_for(REDIRECT_VIEW, url=self.short, _external=True)
+        return url_for('redirect_short_url', short=self.short, _external=True)
 
     @staticmethod
     def get_unique_short():

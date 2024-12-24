@@ -29,7 +29,7 @@ def page_for_generate_url():
             short=form.custom_id.data
         )
         short_url = url_for(
-            'redirect_short_url', url=url_map.short, _external=True
+            'redirect_short_url', short=url_map.short, _external=True
         )
         return render_template(
             'index.html',
@@ -41,11 +41,10 @@ def page_for_generate_url():
         return render_template('index.html', form=form)
 
 
-@app.route('/<string:url>')
-def redirect_short_url(url):
+@app.route('/<string:short>')
+def redirect_short_url(short):
     """Выполняет переадресацию с короткой ссылки на оригинальную."""
-    try:
-        url_map = URLMap.get(url)
-        return redirect(url_map.original)
-    except URLMap.URLValidationError:
+    url_map = URLMap.query.filter_by(short=short).first()
+    if not url_map:
         abort(HTTPStatus.NOT_FOUND)
+    return redirect(url_map.original)
