@@ -1,4 +1,3 @@
-import re
 from http import HTTPStatus
 
 from flask import jsonify, request
@@ -6,10 +5,7 @@ from flask import jsonify, request
 from yacut import app
 from yacut.error_handlers import InvalidAPIUsage
 from yacut.models import URLMap
-from yacut.constants import (
-    MAXIMUM_LENGTH_SHORT,
-    SHORT
-)
+
 
 INCORRECT_REQUEST_MESSAGE = 'Некорректный запрос'
 EMPTY_REQUEST_BODY_MESSAGE = 'Отсутствует тело запроса'
@@ -23,17 +19,12 @@ def generate_short_url():
     """Метод API для генерации короткой ссылки."""
     if not request.is_json:
         raise InvalidAPIUsage(INCORRECT_REQUEST_MESSAGE)
-    
     data = request.get_json(force=True, silent=True)
-    
     if not data:
         raise InvalidAPIUsage(EMPTY_REQUEST_BODY_MESSAGE)
-    
     if 'url' not in data:
         raise InvalidAPIUsage(REQUIRED_URL_FIELD_MESSAGE)
-    
     short = data.get('custom_id')
-    
     try:
         url_map = URLMap.create(
             original=data['url'],
@@ -55,11 +46,9 @@ def generate_short_url():
 def get_original_url(short):
     """Метод API для получения оригинальной ссылки."""
     url_map = URLMap.query.filter_by(short=short).first()
-    
     if not url_map:
         raise InvalidAPIUsage(
             URL_NOT_FOUND_MESSAGE,
             status_code=HTTPStatus.NOT_FOUND
         )
-    
     return jsonify({'url': url_map.original}), HTTPStatus.OK

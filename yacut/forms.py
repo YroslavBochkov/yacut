@@ -12,7 +12,7 @@ from wtforms.validators import (
 from yacut.constants import (
     MAXIMUM_LENGTH_ORIGINAL,
     MAXIMUM_LENGTH_SHORT,
-    SHORT
+    SHORT_PATTERN
 )
 from yacut.models import URLMap
 
@@ -45,7 +45,7 @@ class URLForm(FlaskForm):
         validators=[
             Length(max=MAXIMUM_LENGTH_SHORT),
             Regexp(
-                regex=SHORT,
+                regex=SHORT_PATTERN,
                 message=INVALID_CHARS_MESSAGE
             ),
             Optional()

@@ -4,17 +4,13 @@ from flask import (
     abort,
     flash,
     redirect,
-    render_template,
-    url_for
+    render_template
 )
 
 from yacut import app
 from yacut.forms import URLForm
 from yacut.models import URLMap
-
-DUPLICATE_SHORT_URL_ERROR = (
-    'Предложенный вариант короткой ссылки уже существует.'
-)
+from yacut.error_handlers import InvalidAPIUsage
 
 
 @app.route('/', methods=('GET', 'POST'))
@@ -24,19 +20,15 @@ def page_for_generate_url():
     if not form.validate_on_submit():
         return render_template('index.html', form=form)
     try:
-        url_map = URLMap.create(
-            original=form.original_link.data,
-            short=form.custom_id.data
-        )
-        short_url = url_for(
-            'redirect_short_url', short=url_map.short, _external=True
-        )
         return render_template(
             'index.html',
             form=form,
-            short_url=short_url
+            short_url=URLMap.create(
+                original=form.original_link.data,
+                short=form.custom_id.data
+            ).get_short_link()
         )
-    except (ValueError, RuntimeError) as e:
+    except (URLMap.URLValidationError, InvalidAPIUsage, RuntimeError) as e:
         flash(str(e))
         return render_template('index.html', form=form)
 
