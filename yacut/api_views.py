@@ -33,18 +33,17 @@ def generate_short_url():
             'url': url_map.original,
             'short_link': url_map.get_short_link()
         }), HTTPStatus.CREATED
-    except URLMap.URLValidationError as e:
+    except (URLMap.URLValidationError, ValueError, RuntimeError) as e:
         raise InvalidAPIUsage(str(e), status_code=HTTPStatus.BAD_REQUEST)
 
 
 @app.route('/api/id/<string:short>/', methods=['GET'])
 def get_original_url(short):
     """Метод API для получения оригинальной ссылки."""
-    try:
-        url_map = URLMap.get(short)
-        return jsonify({'url': url_map.original}), HTTPStatus.OK
-    except URLMap.URLValidationError:
+    url_map = URLMap.query.filter_by(short=short).first()
+    if not url_map:
         raise InvalidAPIUsage(
             URL_NOT_FOUND_MESSAGE,
             status_code=HTTPStatus.NOT_FOUND
         )
+    return jsonify({'url': url_map.original}), HTTPStatus.OK

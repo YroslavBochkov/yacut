@@ -4,8 +4,7 @@ from wtforms.validators import (
     DataRequired, Length, Optional, URL, ValidationError, Regexp
 )
 
-from yacut.constants import MAX_LEN_ORIGINAL, MAX_LEN_SHORT
-from yacut.constants import Config
+from yacut.constants import MAXIMUM_LENGTH_ORIGINAL, MAXIMUM_LENGTH_SHORT, SHORT
 from yacut.models import URLMap
 
 ORIGINAL_LINK_LABEL = 'Длинная ссылка'
@@ -27,7 +26,7 @@ class URLForm(FlaskForm):
     original_link = URLField(
         ORIGINAL_LINK_LABEL,
         validators=[
-            Length(max=MAX_LEN_ORIGINAL),
+            Length(max=MAXIMUM_LENGTH_ORIGINAL),
             DataRequired(message=REQUIRED_FIELD_MESSAGE),
             URL(require_tld=True, message=INCORRECT_URL_MESSAGE)
         ]
@@ -35,9 +34,9 @@ class URLForm(FlaskForm):
     custom_id = URLField(
         CUSTOM_ID_LABEL,
         validators=[
-            Length(max=MAX_LEN_SHORT),
+            Length(max=MAXIMUM_LENGTH_SHORT),
             Regexp(
-                regex=Config.SHORT_URL_PATTERN,
+                regex=SHORT,
                 message=INVALID_CHARS_MESSAGE
             ),
             Optional()
@@ -47,5 +46,9 @@ class URLForm(FlaskForm):
 
     def validate_custom_id(self, field):
         """Валидация короткой ссылки с проверкой в базе данных."""
-        if field.data and URLMap.query.filter_by(short=field.data).first():
-            raise ValidationError(DUPLICATE_SHORT_LINK_MESSAGE)
+        if field.data:
+            try:
+                URLMap.get(field.data)
+                raise ValidationError(DUPLICATE_SHORT_LINK_MESSAGE)
+            except URLMap.URLValidationError:
+                pass

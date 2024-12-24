@@ -5,12 +5,13 @@ from flask import url_for
 
 from yacut import db
 from yacut.constants import (
-    MAX_LEN_ORIGINAL,
-    MAX_LEN_SHORT,
+    MAXIMUM_LENGTH_ORIGINAL,
+    MAXIMUM_LENGTH_SHORT,
     SHORT_URL_CHARS,
-    REDIRECT_VIEW
+    REDIRECT_VIEW,
+    GENERATED_SHORT_LENGTH,
+    SHORT
 )
-from yacut.constants import Config
 
 
 class URLMap(db.Model):
@@ -30,8 +31,8 @@ class URLMap(db.Model):
     ERROR_LONG_ORIGINAL = 'Слишком длинная оригинальная ссылка'
 
     id = db.Column(db.Integer, primary_key=True)
-    original = db.Column(db.String(MAX_LEN_ORIGINAL), nullable=False)
-    short = db.Column(db.String(MAX_LEN_SHORT), unique=True, nullable=False)
+    original = db.Column(db.String(MAXIMUM_LENGTH_ORIGINAL), nullable=False)
+    short = db.Column(db.String(MAXIMUM_LENGTH_SHORT), unique=True, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -48,11 +49,11 @@ class URLMap(db.Model):
     @staticmethod
     def get_unique_short():
         """Метод создает уникальную короткую ссылку."""
-        for _ in range(Config.MAX_UNIQUE_SHORT_ATTEMPTS):
+        for _ in range(GENERATED_SHORT_LENGTH):
             short = ''.join(
                 random.choices(
                     population=SHORT_URL_CHARS,
-                    k=Config.GENERATED_SHORT_LENGTH
+                    k=GENERATED_SHORT_LENGTH
                 )
             )
             if not URLMap.query.filter_by(short=short).first():
@@ -73,15 +74,15 @@ class URLMap(db.Model):
         if not original:
             raise URLMap.URLValidationError(URLMap.ERROR_EMPTY_ORIGINAL)
 
-        if len(original) > MAX_LEN_ORIGINAL:
+        if len(original) > MAXIMUM_LENGTH_ORIGINAL:
             raise URLMap.URLValidationError(URLMap.ERROR_LONG_ORIGINAL)
 
         if short:
-            if len(short) > MAX_LEN_SHORT:
+            if len(short) > MAXIMUM_LENGTH_SHORT:
                 raise URLMap.URLValidationError(
                     URLMap.ERROR_INVALID_SHORT_URL
                 )
-            if not re.match(Config.SHORT_URL_PATTERN, short):
+            if not re.match(SHORT, short):
                 raise URLMap.URLValidationError(
                     URLMap.ERROR_INVALID_SHORT_URL
                 )
